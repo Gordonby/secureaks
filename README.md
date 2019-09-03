@@ -115,7 +115,7 @@ We will grant the necessary permissions to this Service Principal later on.
 
 If you want to create it and automatically store its APPID and PASSWORD values to the respective variables:
 ```bash
-eval "$(az ad sp create-for-rbac -n ${PREFIX}sp --skip-assignment | jq -r '. | to_entries | .[] | .key + "=\"" + .value + "\""' | sed -r 's/^(.*=)/\U\1/')"
+eval "$(az ad sp create-for-rbac -n ${PREFIX}sp --skip-assignment -o json | jq -r '. | to_entries | .[] | .key + "=\"" + .value + "\""' | sed -r 's/^(.*=)/\U\1/')"
 ```
 
 **Alternatively:** If this is too much bash-foo, if you're getting an error (parse error: Invalid numeric literal at line 1, column 6), you're not running bash or want to manually do it, run instead:
@@ -270,7 +270,7 @@ k apply -f https://raw.githubusercontent.com/Azure/aad-pod-identity/master/deplo
 
 # Create User Identity
 # I'm placing it on MC_RG where the AKS SP already has permissions, you may place it on another RG as long as you set up the right permissions
-IDENTITY=$(az identity create -g "MC_${RG}_${AKSNAME}_${LOC}" -n $IDENTITY_NAME)
+IDENTITY=$(az identity create -g "MC_${RG}_${AKSNAME}_${LOC}" -n $IDENTITY_NAME -o json)
 echo $IDENTITY
 ASSIGNEEID=$(echo $IDENTITY | jq .clientId | tr -d '"')
 echo $ASSIGNEEID
@@ -337,7 +337,7 @@ helm repo update
 # Install and Setup Ingress
 # Grant AAD Identity Access to App Gateway
 
-APPGATEWAYSCOPEID=$(az network application-gateway show -g $RG -n $AGNAME | jq .id | tr -d '"')
+APPGATEWAYSCOPEID=$(az network application-gateway show -g $RG -n $AGNAME -o json | jq .id | tr -d '"')
 echo $APPGATEWAYSCOPEID
 ROLEAGWCONTRIB=$(az role assignment create --role Contributor --assignee $ASSIGNEEID --scope $APPGATEWAYSCOPEID)
 ROLEAGWREADER=$(az role assignment create --role Reader --assignee $ASSIGNEEID --scope "/subscriptions/${SUBID}/resourcegroups/${RG}")
